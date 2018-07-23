@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="referrer" content="never">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.js"></script>
+    <link rel="stylesheet" href="//at.alicdn.com/t/font_751193_4qlcwcm1jfk.css">
+    <title>DouBan Movie</title>
+    <style>
+        *{
+            margin: 0;
+            padding: 0;
+        }
+        html,body{
+            height: 100%;
+        }
+        body{
+            position: relative;
+        }
+        @media (min-width: 360px) {
+            main .details{line-height: 1.3; font-size: 12px;}
+            main .details h3{margin-top: -3px; }        
+            main .details .all{margin: 3px 0px;}
+        }
+        @media (min-width: 768px) {
+            main .details{line-height: 1.5; font-size: 14px;}     
+            main .details .all{margin: 0px 0px;}
+        }
+        footer{
+            position: absolute;
+            bottom: 0px;
+            display: flex;
+            width: 100%;
+            justify-content: center; 
+        }
+        footer > div{
+            width: 33.3%; 
+            text-align: center;
+            margin: 10px 0px;
+        }
+        footer > .active{
+            color: #078FFF;
+        }
+        footer > div > i{
+            display: block;
+            margin: 10px 0px;
+        }
+        main{
+            height: calc(100vh - 79px);
+            overflow: scroll;
+        }
+        main > section{
+            display: none;
+            height: calc(100% - 45px);
+            padding: 10px;
+        }
+        main > section:first-child{
+            display: block;
+        }
+        main .item{
+            display: flex;
+            padding: 10px 0px;
+            border-bottom: 1px solid #ccc;
+        }
+        main .image,
+        main img{
+            width: 70px;
+            height: 105px;
+            padding-right: 10px;
+        }
+        main .details{
+            align-content: center;
+            justify-content: center;
+            color:#333;
+        }
+        main .details .score{
+            color: #078FFF;
+            font-weight: bold;
+        }
+        main .details h3{
+            font-size: 18px;
+            font-weight: bold;
+        }
+        main .details .actors{
+            margin-right: 40px;
+        }
+        main .loading{
+            text-align: center;
+            padding: 5px;
+            display: none;
+        }
+        .loading .iconfont{
+            display: inline-block;
+            animation: 1s rotate linear infinite;
+        }
+        @keyframes rotate{
+            0% { transform: rotate(0deg);}
+            100%  {transform: rotate(360deg);}
+        }
+        #search {
+            height: calc(100% - 45px);
+        }
+        section .searchArea{
+            color: #333;
+            margin: 10px 0px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #ccc;
+            position: relative;
+        }
+        section .searchArea input {
+            width: calc(100% - 50px);
+            padding: 10px 0px;
+            background-color: #eee;
+            border: none;
+            border-radius: 2px;
+            font-size: 14px;
+        }
+        section .searchArea .button{
+            position: absolute;
+            right: 0;
+            padding: 10px;
+            color: #078FFF;
+            cursor: pointer;
+            font-size: 14px;
+            text-align: center;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <section>
+            <div id="Top250"></div>
+            <div class="loading">
+                <i class="iconfont icon-loading"></i> 
+            </div>
+        </section>
+        <section>
+            <div id="BW"></div>
+        </section>
+        <section id="search">
+            <div class="searchArea">
+                <input type="text" placeholder="what do you want to search?">
+                <span class="button">Click</span>
+            </div>
+            <div class="searchResult">
+                <div class="loading">
+                    <span class="iconfont icon-loading"></span> 
+                </div>
+            </div>
+        </section>
+    </main>
+    <footer>
+        <div class="active">
+            <i class="iconfont icon-list"></i> 
+            <p>Top250</p>
+        </div>
+        <div>
+            <i class="iconfont icon-NA"></i>
+            <p>北美</p>
+        </div>
+        <div>
+            <i class="iconfont icon-search"></i>
+            <p>搜索</p>
+        </div>
+    </footer>
+    <script>
+        $('footer > div').click(function(){
+            let index = $(this).index()
+            $(this).addClass('active').siblings().removeClass('active')
+            $('section').hide().eq(index).fadeIn()
+        })
+
+        makeTop250()
+        function makeTop250(){
+            let startIndex = 0
+            let isLoading = false
+            getData()
+            function getData(){
+                if(isLoading) return
+                isLoading = true
+                $('.loading').show()
+                $.ajax({
+                url: 'http://api.douban.com/v2/movie/top250',
+                type: 'GET',
+                data: {
+                    start: startIndex,
+                    count: 20
+                },
+                dataType: 'jsonp'
+                }).done((obtainData)=>{
+                    console.log(obtainData)
+                    setData(obtainData)
+                    startIndex = startIndex + 20
+                }).fail(()=>{
+                    console.log('oops... error...')
+                }).always(()=>{
+                    isLoading = false
+                    $('.loading').hide()
+                })
+            }
+            function setData(data){
+                data.subjects.forEach((value)=>{
+                    let template = `
+                        <div class="item">
+                            <div class="image">
+                                <img src="http://img7.doubanio.com/view/photo/s_ratio_poster/public/p480747492.jpg" alt="">
+                            </div>
+                            <div class="details">
+                                <h3 class="title">肖申克的救赎</h3>
+                                <div class="all">
+                                    <span class="score">9.6分</span>
+                                </div>
+                                <div class="all">
+                                    <span class="year">1994</span>
+                                    <span class="type">剧情</span>
+                                </div>
+                                <div class="all">导演: <span class="director">弗兰克·德拉邦特</span></div>
+                                <div class="actors">主演: <span class="actor">蒂姆·罗宾斯, 摩根·弗里曼, 鲍勃·冈顿</span></div>
+                            </div>
+                        </div>
+                    `
+                    let $node = $(template)
+                    $node.find('img').attr('src', value.images.medium) 
+                    $node.find('.title').text(value.title)
+                    $node.find('.score').text(value.rating.average)
+                    $node.find('.year').text(value.year)
+                    $node.find('.type').text(value.genres.join(' / '))
+                    $node.find('.directors').text(()=>{
+                        let directorsArr = []
+                        value.directors.forEach((item)=>{
+                            directorsArr.push(item.name)
+                        })
+                        return directorsArr.join('、')
+                    })
+                    $node.find('.actor').text(()=>{
+                        let actorArr = []
+                        value.casts.forEach((item)=>{
+                            actorArr.push(item.name)
+                        })
+                        return actorArr.join('、')
+                    })
+                $('#Top250').append($node)
+                });
+            }
+            $('main').scroll(()=>{
+                if($('#Top250').height() == $('main').height() + $('main').scrollTop()){
+                    getData()
+                }
+            })
+        }
+
+        makeBW()
+        function makeBW(){
+            getData()
+            function getData(){
+                $.ajax({
+                url: 'http://api.douban.com/v2/movie/us_box',
+                type: 'GET',
+                dataType: 'jsonp'
+                }).done((obtainData)=>{
+                    console.log(obtainData)
+                    setData(obtainData)
+                }).fail(()=>{
+                    console.log('oops... error...')
+                })
+            }
+            function setData(data){
+                data.subjects.forEach((value)=>{
+                    let template = `
+                        <div class="item">
+                            <div class="image">
+                                <img src="http://img7.doubanio.com/view/photo/s_ratio_poster/public/p2505040220.jpg" alt="">
+                            </div>
+                            <div class="details">
+                                <h3 class="title">"精灵旅社3：疯狂假期"</h3>
+                                <div class="all">
+                                    <span class="year">2018</span>
+                                    <span class="type">喜剧</span>
+                                </div>
+                                <div class="all">导演: <span class="director">弗兰克·德拉邦特</span></div>
+                                <div class="actors">主演: <span class="actor">蒂姆·罗宾斯, 摩根·弗里曼, 鲍勃·冈顿</span></div>
+                            </div>
+                        </div>
+                    `
+                    var $node = $(template)
+                    $node.find('img').attr('src', value.subject.images.medium) 
+                    $node.find('.title').text(value.subject.title)
+                    $node.find('.year').text(value.subject.year)
+                    $node.find('.type').text(value.subject.genres.join(' / '))
+                    $node.find('.director').text(()=>{
+                        let directorsArr = []
+                        value.subject.directors.forEach((item)=>{
+                            directorsArr.push(item.name)
+                        })
+                        return directorsArr.join('、')
+                    })
+                    $node.find('.actor').text(()=>{
+                        let actorArr = []
+                        value.subject.casts.forEach((item)=>{
+                            actorArr.push(item.name)
+                        })
+                        return actorArr.join('、')
+                    })
+                    $('#BW').append($node)    
+                })
+            }
+        }
+
+        makeSearch()
+        function makeSearch(){
+            let keyword = ''
+            let beforeData = false
+            $('.button').click(()=>{
+                keyword = $('#search').find('input').val()
+                getData() 
+                beforeData = true
+                if(beforeData){
+                    $('#search').find('.item').remove()
+                }
+            })
+            
+            function getData(){
+                $.ajax({
+                    url: 'http://api.douban.com/v2/movie/search?',
+                    type: 'GET',
+                    data:{
+                        q: keyword
+                    },
+                    dataType: 'jsonp'
+                }).done((obtainData)=>{
+                    console.log(obtainData)
+                    setData(obtainData)
+                }).fail(()=>{
+                    console.log('oops... error...')
+                })
+            }
+            function setData(data){
+                data.subjects.forEach((value)=>{
+                    let template = `
+                        <div class="item">
+                            <div class="image">
+                                <img src="http://img7.doubanio.com/view/photo/s_ratio_poster/public/p480747492.jpg" alt="">
+                            </div>
+                            <div class="details">
+                                <h3 class="title">肖申克的救赎</h3>
+                                <div class="all">
+                                    <span class="score">9.6分</span>
+                                </div>
+                                <div class="all">
+                                    <span class="year">1994</span>
+                                    <span class="type">剧情</span>
+                                </div>
+                                <div class="all">导演: <span class="director">弗兰克·德拉邦特</span></div>
+                                <div class="actors">主演: <span class="actor">蒂姆·罗宾斯, 摩根·弗里曼, 鲍勃·冈顿</span></div>
+                            </div>
+                        </div>
+                    `
+                    let $node = $(template)
+                    $node.find('img').attr('src', value.images.medium) 
+                    $node.find('.title').text(value.title)
+                    $node.find('.score').text(value.rating.average)
+                    $node.find('.year').text(value.year)
+                    $node.find('.type').text(value.genres.join(' / '))
+                    $node.find('.directors').text(()=>{
+                        let directorsArr = []
+                        value.directors.forEach((item)=>{
+                            directorsArr.push(item.name)
+                        })
+                        return directorsArr.join('、')
+                    })
+                    $node.find('.actor').text(()=>{
+                        let actorArr = []
+                        value.casts.forEach((item)=>{
+                            actorArr.push(item.name)
+                        })
+                        return actorArr.join('、')
+                    })
+                $('#search').append($node)
+                });
+            }    
+        }
+    </script>
+</body>
+</html>
